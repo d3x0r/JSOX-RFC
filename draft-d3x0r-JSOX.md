@@ -23,7 +23,7 @@ title: "Javascript Object Exchange Protocol"
 abbrev: "JSOX"
 category: info
 
-docname: draft-d3x0r-independent-JSOX-latest
+docname: draft-d3x0r-JSOX-latest
 submissiontype: independant  # also: "independent", "IAB", or "IRTF"
 number:
 date:
@@ -32,9 +32,11 @@ v: 3
 area: AREA
 workgroup: WG Working Group
 keyword:
- - next generation
- - unicorn
- - sparkling distributed ledger
+ - JSON
+ - Javascript
+ - Network
+ - Protocol
+ - 
 venue:
   group: WG
   type: Working Group
