@@ -19,12 +19,12 @@
 # Change the file extension to match the format (.xml for XML, etc...)
 #
 ###
-title: "TODO - Your title"
-abbrev: "TODO - Abbreviation"
+title: "Javascript Object Exchange Protocol"
+abbrev: "JSOX"
 category: info
 
-docname: draft-todo-yourname-protocol-latest
-submissiontype: IETF  # also: "independent", "IAB", or "IRTF"
+docname: draft-d3x0r-independent-JSOX-latest
+submissiontype: independant  # also: "independent", "IAB", or "IRTF"
 number:
 date:
 consensus: true
@@ -45,9 +45,9 @@ venue:
 
 author:
  -
-    fullname: Your Name Here
-    organization: Your Organization Here
-    email: your.email@example.com
+    fullname: James Buckeyne
+    organization: None
+    email: d3ck0r@gmail.com
 
 normative:
 
