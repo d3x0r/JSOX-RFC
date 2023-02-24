@@ -1,46 +1,25 @@
----
-###
-# Internet-Draft Markdown Template
-#
-# Rename this file from draft-todo-yourname-protocol.md to get started.
-# Draft name format is "draft-<yourname>-<workgroup>-<name>.md".
-#
-# For initial setup, you only need to edit the first block of fields.
-# Only "title" needs to be changed; delete "abbrev" if your title is short.
-# Any other content can be edited, but be careful not to introduce errors.
-# Some fields will be set automatically during setup if they are unchanged.
-#
-# Don't include "-00" or "-latest" in the filename.
-# Labels in the form draft-<yourname>-<workgroup>-<name>-latest are used by
-# the tools to refer to the current version; see "docname" for example.
-#
-# This template uses kramdown-rfc: https://github.com/cabo/kramdown-rfc
-# You can replace the entire file if you prefer a different format.
-# Change the file extension to match the format (.xml for XML, etc...)
-#
-###
 title: "Javascript Object Exchange Protocol"
 abbrev: "JSOX"
 category: info
 
 docname: draft-d3x0r-JSOX-latest
-submissiontype: independant  # also: "independent", "IAB", or "IRTF"
+submissiontype: independant
 number:
-date:
+date: 2023/02/23
 consensus: true
 v: 3
 area: AREA
-workgroup: WG Working Group
+workgroup: WG Working Group (TC39?)
 keyword:
  - JSON
  - Javascript
  - Network
  - Protocol
- - 
+
 venue:
-  group: WG
-  type: Working Group
-  mail: WG@example.com
+  group: (TC39?)
+  type:  Technical Committee
+  mail: ?
   arch: https://example.com/WG
   github: https://github.com/d3x0r/JSOX-RFC
   latest: https://github.com/d3x0r/JSOX-RFC
@@ -193,28 +172,32 @@ elements of the language.
 
 ## JSOX Grammar
 
-A JSOX text is a sequence of tokens.  The set of tokens includes six
-structural characters, identifiers, strings, numbers, and six literal 
-names.
+A JSOX text is a sequence of tokens.  The set of tokens includes nine
+structural characters, strings(quoted and unquoted), numbers(dates,integer,float,bigint), and six(?) literal 
+names, dates.
 
 A JSOX text is a serialized value, or class specification. 
 
 
-   JSOX-text = ws value ws
+   JSOX-text = *(value)
 
-These are the six structural characters:
+These are the nine structural characters:
 
-   begin-array     = ws %x5B ws  ; [ left square bracket
+|name| ascii value | character| character name| usage|
+|-----|----|-----|----|----|
+|   begin-array    |  %x5B  | [ |left square bracket| open an array of values, subsequent values will be added to the array. |
+|   begin-object   |  %x7B  | { |left curly bracket| open an object, subsequent values will be added to the object, until a close. |
+|   end-array      |  %x5D  | ] |right square bracket| complete an array; if this matches a top level open array, then a value is complete |
+|   end-object     |  %x7D  | } |right curly bracket| close an object; if this matches a top level open object, then a value is complete |
+|   name-separator | %x3A  | : |colon| terminates a string of characters in an object; the string becomes the name of the value in the object.  If a colon appears within a number or quotation marks, it is not interpreted in any way |
+|   value-separator| %x2C  | , |comma| This terminates a value in an array, or object, which adds the completed value to the array, or to the object with the previously specified name. |
 
-   begin-object    = ws %x7B ws  ; { left curly bracket
 
-   end-array       = ws %x5D ws  ; ] right square bracket
 
-   end-object      = ws %x7D ws  ; } right curly bracket
+|   double-quotation-mark | %x22  | " |double quote| Begins a string, changes parsing to understand backslash as a character escape, and completes at the next un-escaped double-quotation-mark |
+|   single-quotation-mark | %x27  | ' |single quote| (see double-quotation-mark) completes at the next un-escaped single-quotation-mark |
+|   tick-quotation-mark | %x60  | ` |back tick/accent/grave| (see double-quotation-mark) completes at the next un-escaped tick-quotation-mark |
 
-   name-separator  = ws %x3A ws  ; : colon
-
-   value-separator = ws %x2C ws  ; , comma
 
 Insignificant whitespace is allowed before or after any of the six
 structural characters.  Whitespace characters explicitly end a previous token
@@ -223,15 +206,15 @@ whitespace is optional, except where syntax requirements impose requirement;
 although some required whitespace can also be resolved using quotes around
 identifiers, a stream of numbers requires whitespace separation.
 
-
    ws = *(
            %x20 /              ; Space
            %xA0 /              ; Non-breaking Space
            %x09 /              ; Horizontal tab
            %x0A /              ; Line feed or New line
+           %x0D /              ; Carriage return
            %x07ec /            ; 2028 LS (Line separator)
            %x07ed /            ; 2029 PS (paragraph separator)
-           %x0D )              ; Carriage return
+           %xFEFF )            ; ZWNBSP (zero width non breaking space)
 
 Identifiers are either a string or any sequence of characters that do not 
 include structural characters or whitespace, and also does not begin with 
@@ -251,7 +234,14 @@ Javascript seems to stringify the values before using them as the object key.
 It may be that there's an implementation that 'true' and `true` is not the string "true".
 
 When dealing with a JSOX stream, whitespace may be significant to separate
-values, for example the stream '1 2 3 4 5' which are 5 simple numbers.
+values, for example the stream '1 2 3 4 5' which are 5 simple number values. Another example
+might be 'true false false true' which require at least a space otherwise 'truefalsefalsetrue' 
+would become an unquoted string or identifier.   However the stream `[0][1][2][3]` are 4 array values with 1 number
+in them, and do not require whitespace between values.   The stream (string)-(array) without a whitespace also indicates
+that the array should be treated as a parameter to the type named by the string.  Similarly (string)-(object) is an
+extended typed-object meaning, and if whitespace is found, the string and related option will become two distinct values.
+There is some support for `"something""argument"` which treats 'something' as a class-name, and passes the string
+argument to the class-reviver (if there is one); otherwise returns 'argument' as the value (?).
 
 # Values
 
@@ -274,14 +264,14 @@ values, for example the stream '1 2 3 4 5' which are 5 simple numbers.
 
       Infinity = [ minus ] %x49.6e.66.69.6e.69.7f.79  ; [-]Infinity
 
-      number = *[ plus | minus ] int [ radix ] [ time-symbol ] [ frac ] [ exp ] [ bigint-suffix ]
-
       NaN = %x4e.61.4e                      ; NaN
 
       undefined = %x75.6e.64.65.66.69.6e.65.64   ; undefined
 
+      number = *[ plus | minus ] int [ radix ] [ time-symbol ] [ frac ] [ exp ] [ bigint-suffix ]
 
-# Objects and Typed Objects
+
+# Map, Object and Typed Objects
 
    An object structure is represented as a pair of curly brackets
    surrounding zero or more name/value pairs (or members).  A name is a
@@ -358,18 +348,19 @@ values, for example the stream '1 2 3 4 5' which are 5 simple numbers.
 	accepts '=' as a nul terminator.
    The following characters are accepted at the final encoding, but most
 	will require quoting.  With the above defined sequence quotes may be
-   omitted on binary typed array information.
+   omitted on binary typed array information, iff the sequence does not start with a number digit.
 
+   When converting from a base64 string, these characters might also be used as alternatives to '$' and '_'.
+   
+  -
 		'$':62
 		'+':62
 		'-':62
 		'.':62
-
+  -
 		'_':63
 		'/':63
 		',':63
-
-   
 
 # Numbers
 
@@ -517,16 +508,17 @@ values, for example the stream '1 2 3 4 5' which are 5 simple numbers.
               %x22 /          ; "    quotation mark  U+0022
               %x27 /          ; '    quotation mark  U+0027
               %x60 /          ; `    quotation mark  U+0060
-              %x5C /          ; \    reverse solidus U+005C
-              %x2F /          ; /    solidus         U+002F
+              %x5C /          ; \    reverse slash   U+005C
+              %x2F /          ; /    slash           U+002F
               %x62 /          ; b    backspace       U+0008
               %x66 /          ; f    form feed       U+000C
               %x6E /          ; n    line feed       U+000A
               %x72 /          ; r    carriage return U+000D
               %x74 /          ; t    tab             U+0009
-              %x78 2HEXDIG )  ; xXX                  
+              %x78 2HEXDIG /  ; xXX                  
               %x30-%x32 2OCTDIG )  ; 0               
               %x75 4HEXDIG )  ; uXXXX                U+XXXX
+              %x75 { NHEXDIG } )  ; u{XXXXX}         U+XXXXX
 
       escape = %x5C              ; \
 
