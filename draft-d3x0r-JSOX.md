@@ -2,7 +2,7 @@ title: "Javascript Object Exchange Protocol"
 abbrev: "JSOX"
 category: info
 
-docname: draft-d3x0r-JSOX-latest
+docname: draft-todo-yourname-protocol-latest
 submissiontype: independant
 number:
 date: 2023/02/23
